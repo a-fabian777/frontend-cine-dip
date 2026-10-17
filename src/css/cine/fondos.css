@@ -1,0 +1,21 @@
+/**
+ * Fondos propios del cine (no son de la plantilla Metronic).
+ * Clases reutilizables para no mezclar estilos crudos en los componentes.
+ */
+
+/*
+ * Telon tipo "cine": negro con un resplandor azul marino arriba que se
+ * funde hacia el negro, al estilo de los catalogos de cursos/streaming.
+ * Colores FIJOS (a juego con la barra de anuncio #0f1b2e y el primary
+ * #1379f0); la zona publica ya es siempre oscura, por eso no usa tokens.
+ *
+ * Las paradas en px (no %) mantienen el resplandor arriba aunque la
+ * pagina sea muy larga: tras ~620px queda el negro base.
+ */
+.fondo-peliculas {
+  background-color: #070b14;
+  background-image:
+    radial-gradient(1200px 520px at 50% -120px, rgba(19, 121, 240, 0.22), transparent 70%),
+    linear-gradient(180deg, #0d1a2e 0px, #070b14 620px);
+  background-repeat: no-repeat;
+}

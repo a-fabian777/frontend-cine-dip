@@ -11,11 +11,11 @@ export function Footer() {
           <div className="flex order-2 md:order-1  gap-2 font-normal text-sm">
             <span className="text-muted-foreground">{currentYear} &copy;</span>
             <a
-              href="https://keenthemes.com"
+              href="https://posgrado.upea.bo/"
               target="_blank"
               className="text-secondary-foreground hover:text-primary"
             >
-              Keenthemes Inc.
+              Desarrollo por UPEA-POSGRADO
             </a>
           </div>
           <nav className="flex order-1 md:order-2 gap-4 font-normal text-sm text-muted-foreground">

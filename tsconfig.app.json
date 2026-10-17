@@ -19,8 +19,8 @@
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true,
-    "baseUrl": "./",
-    /* Path alias */
+    /* Path alias. Sin baseUrl (obsoleto en TS 7): los paths se resuelven
+       relativos a este tsconfig. Vite resuelve "@" aparte, en vite.config.ts */
     "paths": {
       "@/*": ["./src/*"]
     }

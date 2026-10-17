@@ -2,7 +2,10 @@ import { useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { AlertCircle, Eye, EyeOff } from 'lucide-react';
 import { useForm } from 'react-hook-form';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { rutaInterna } from '@/lib/rutas';
+import { useAuth } from '@/auth/context/auth-context';
+import { toast } from 'sonner';
 import { Alert, AlertIcon, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import {
@@ -37,6 +40,11 @@ const CAMPOS: {
 
 export function SignUpPage() {
   const navigate = useNavigate();
+  const { login } = useAuth();
+  // Si venia de reservar, el login le paso a donde volver
+  const [searchParams] = useSearchParams();
+  // Solo rutas internas: un ?next=//otro-sitio.com redirigiria afuera
+  const next = rutaInterna(searchParams.get('next'));
 
   const [verContrasena, setVerContrasena] = useState(false);
   const [procesando, setProcesando] = useState(false);
@@ -66,13 +74,14 @@ export function SignUpPage() {
       // Y nunca se manda "rol": el backend pone CLIENTE por defecto
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { confirmar, ...datos } = values;
-      console.log('>>> registrando usuario:', datos.usuario);
 
-      const respuesta = await personaService.registrar(datos);
-      console.log('>>> respuesta del registro:', respuesta);
+      await personaService.registrar(datos);
 
-      alert(`Cuenta creada para ${respuesta.data.nombres}. Ya puedes ingresar.`);
-      navigate('/auth/signin');
+      // Entra solo con lo que acaba de escribir: no se le piden los datos dos veces.
+      // Una cuenta nueva siempre es CLIENTE, por eso el destino es /peliculas
+      await login(datos.usuario, datos.constrasena);
+      toast.success('¡Cuenta creada!', { description: `Bienvenido, ${datos.nombres}` });
+      navigate(next || '/peliculas');
     } catch (err) {
       setError(
         err instanceof Error
@@ -192,7 +201,10 @@ export function SignUpPage() {
 
       <p className="text-center text-sm text-muted-foreground">
         ¿Ya tienes cuenta?{' '}
-        <Link to="/auth/signin" className="font-medium text-primary hover:underline">
+        <Link
+          to={`/auth/signin${next ? `?next=${encodeURIComponent(next)}` : ''}`}
+          className="font-medium text-primary hover:underline"
+        >
           Ingresa
         </Link>
       </p>

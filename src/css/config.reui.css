@@ -19,6 +19,12 @@
   --accent-foreground: oklch(21% 0.006 285.885); /* --color-zinc-900 */
   --destructive: oklch(57.7% 0.245 27.325); /* --color-red-600 */
   --destructive-foreground: oklch(1 0 0); /* --color-white */
+  --success: oklch(62.7% 0.194 149.214); /* --color-green-600 */
+  --success-foreground: oklch(1 0 0); /* --color-white */
+  --warning: oklch(76.9% 0.188 70.08); /* --color-amber-500 */
+  --warning-foreground: oklch(1 0 0); /* --color-white */
+  --info: oklch(60.6% 0.25 292.717); /* --color-violet-500 */
+  --info-foreground: oklch(1 0 0); /* --color-white */
   --mono: oklch(14.1% 0.005 285.823); /* --color-zinc-950 */
   --mono-foreground: oklch(1 0 0); /* --color-white */
 
@@ -49,6 +55,12 @@
   --accent-foreground: oklch(98.5% 0 0); /* --color-zinc-50 */
   --destructive: oklch(57.7% 0.245 27.325); /* --color-red-600 */
   --destructive-foreground: oklch(1 0 0); /* --color-white */
+  --success: oklch(62.7% 0.194 149.214); /* --color-green-600 */
+  --success-foreground: oklch(1 0 0); /* --color-white */
+  --warning: oklch(76.9% 0.188 70.08); /* --color-amber-500 */
+  --warning-foreground: oklch(1 0 0); /* --color-white */
+  --info: oklch(60.6% 0.25 292.717); /* --color-violet-500 */
+  --info-foreground: oklch(1 0 0); /* --color-white */
   --mono: oklch(87.1% 0.006 286.286); /* --color-zinc-300 */
   --mono-foreground: oklch(0 0 0); /* --color-black */
 
@@ -84,6 +96,15 @@
 
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
+
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+
+  --color-info: var(--info);
+  --color-info-foreground: var(--info-foreground);
 
   --color-mono: var(--mono);
   --color-mono-foreground: var(--mono-foreground);

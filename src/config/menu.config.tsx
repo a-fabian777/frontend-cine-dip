@@ -1,10 +1,8 @@
 import {
   CalendarDays,
   Clapperboard,
+  Globe,
   Home,
-  Popcorn,
-  Ticket,
-  UserCog,
   Users,
 } from 'lucide-react';
 import { type MenuConfig } from './types';
@@ -21,54 +19,36 @@ export const MENU_SIDEBAR: MenuConfig = [
   {
     title: 'Inicio',
     icon: Home,
-    path: '/',
+    path: '/panel',
   },
   { heading: 'Cartelera' },
   {
     title: 'Funciones',
     icon: CalendarDays,
-    path: '/cartelera',
-    // disabled: true,
+    path: '/panel/funciones',
   },
   {
     title: 'Películas',
     icon: Clapperboard,
-    path: '/peliculas',
-    // disabled: true,
+    // La tabla del panel; desde ahi esta el boton "Nueva pelicula"
+    path: '/panel/peliculas',
   },
-  { heading: 'Ventas' },
-  {
-    title: 'Reservar',
-    icon: Ticket,
-    path: '/reservas/nueva',
-    disabled: true,
-  },
-  {
-    title: 'Mis reservas',
-    icon: Popcorn,
-    path: '/reservas',
-    disabled: true,
-  },
+  // Sin seccion "Ventas": se reserva desde la zona publica y el backend
+  // no tiene endpoint para listar reservas (solo POST /reservas)
   { heading: 'Administración' },
   {
     title: 'Personas',
     icon: Users,
-    path: '/personas',
-    disabled: true,
-  },
-  {
-    title: 'Roles',
-    icon: UserCog,
-    path: '/roles',
-    disabled: true,
+    path: '/panel/personas',
   },
 ];
 
-/** El menú superior reutiliza las mismas entradas: no hay mega menú que mantener. */
+/**
+ * Menu superior del panel. No repite el lateral: solo lleva de vuelta al
+ * sitio publico, la contraparte del boton "Panel" de la cabecera publica.
+ */
 export const MENU_MEGA: MenuConfig = [
-  { title: 'Inicio', path: '/' },
-  { title: 'Cartelera', path: '/cartelera'},
-  { title: 'Películas', path: '/peliculas'},
+  { title: 'Ver sitio público', icon: Globe, path: '/peliculas' },
 ];
 
 export const MENU_MEGA_MOBILE: MenuConfig = MENU_MEGA;

@@ -20,9 +20,12 @@ import { Badge } from '@/components/ui/badge';
 export function SidebarMenu() {
   const { pathname } = useLocation();
   // Memoize matchPath to prevent unnecessary re-renders
+  // '/panel' es el comienzo de TODAS las rutas del panel: por prefijo quedaba
+  // marcado siempre junto al item real, asi que solo cuenta si es exacto
   const matchPath = useCallback(
     (path: string): boolean =>
-      path === pathname || (path.length > 1 && pathname.startsWith(path)),
+      path === pathname ||
+      (path !== '/panel' && path.length > 1 && pathname.startsWith(`${path}/`)),
     [pathname],
   );
 
@@ -80,9 +83,11 @@ export function SidebarMenu() {
           value={item.path || ''}
           className="text-sm font-medium"
         >
+          {/* Sin justify-between: con solo icono y titulo, los mandaba a
+              los extremos; asi quedan juntos como los items deshabilitados */}
           <Link
             to={item.path || '#'}
-            className="flex items-center justify-between grow gap-2"
+            className="flex items-center grow gap-2"
           >
             {item.icon && <item.icon data-slot="accordion-menu-icon" />}
             <span data-slot="accordion-menu-title">{item.title}</span>

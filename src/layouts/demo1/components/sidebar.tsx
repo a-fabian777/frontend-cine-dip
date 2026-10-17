@@ -1,4 +1,3 @@
-import { useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { useSettings } from '@/providers/settings-provider';
 import { SidebarHeader } from './sidebar-header';
@@ -6,15 +5,14 @@ import { SidebarMenu } from './sidebar-menu';
 
 export function Sidebar() {
   const { settings } = useSettings();
-  const { pathname } = useLocation();
 
   return (
     <div
       className={cn(
         'sidebar bg-background lg:border-e lg:border-border lg:fixed lg:top-0 lg:bottom-0 lg:z-20 lg:flex flex-col items-stretch shrink-0',
-        (settings.layouts.demo1.sidebarTheme === 'dark' ||
-          pathname.includes('dark-sidebar')) &&
-          'dark',
+        // La clase "dark" solo aqui: las variables de color oscuras se aplican
+        // al menu y el contenido sigue claro. Se elige en el menu del avatar
+        settings.layouts.demo1.sidebarTheme === 'dark' && 'dark',
       )}
     >
       <SidebarHeader />

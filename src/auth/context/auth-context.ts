@@ -7,7 +7,8 @@ interface AuthContextValue {
   loading: boolean;
   isAuthenticated: boolean;
   user?: UsuarioSesion;
-  login: (usuario: string, contrasena: string) => Promise<void>;
+  // Devuelve la sesion para que el formulario decida a donde ir segun el rol
+  login: (usuario: string, contrasena: string) => Promise<UsuarioSesion>;
   logout: () => void;
   tieneRol: (...roles: string[]) => boolean;
 }
@@ -24,7 +25,10 @@ interface AuthContextValue {
 export const AuthContext = createContext<AuthContextValue>({
   loading: false,
   isAuthenticated: false,
-  login: async () => {},
+  // Solo se usa si alguien queda fuera del proveedor: mejor avisar que fingir
+  login: async () => {
+    throw new Error('useAuth se uso fuera de AuthProvider');
+  },
   logout: () => {},
   tieneRol: () => false,
 });

@@ -35,3 +35,23 @@ export interface Asiento {
     activo: boolean;
     disponible: boolean;
 }
+
+// post /cartelera/funciones (ADMIN o GERENTE)
+// Las horas van CON segundos ("19:00:00"): el input time da "19:00"
+// y el backend lo rechaza. La fecha va "2026-09-17"
+export interface NuevaFuncion {
+    idPelicula: number;
+    idSala: number;
+    fecha: string;
+    horaInicio: string;
+    horaFin: string;   // debe ser posterior al inicio, el mismo dia
+    precio: number;
+    // estado se omite: el backend pone PROGRAMADA
+}
+
+// Responde lo mismo que se envio, con su idFuncion
+export interface FuncionCreada {
+    status: string;
+    message?: string;
+    data: NuevaFuncion & { idFuncion: number; estado: string };
+}

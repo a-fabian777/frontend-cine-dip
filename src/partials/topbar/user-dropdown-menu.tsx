@@ -1,21 +1,16 @@
 import { ReactNode } from 'react';
 import { useAuth } from '@/auth/context/auth-context';
-import { I18N_LANGUAGES } from '@/i18n/config';
-import { Language } from '@/i18n/types';
-import { Globe, Moon } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { HelpCircle, Moon, PanelLeft } from 'lucide-react';
+import { lanzarTourPanel } from '@/lib/tour';
 import { useTheme } from 'next-themes';
-import { useLanguage } from '@/providers/i18n-provider';
+import { useSettings } from '@/providers/settings-provider';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuRadioGroup,
-  DropdownMenuRadioItem,
   DropdownMenuSeparator,
-  DropdownMenuSub,
-  DropdownMenuSubContent,
-  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Switch } from '@/components/ui/switch';
@@ -28,9 +23,11 @@ import { Switch } from '@/components/ui/switch';
  * sí funcionan: idioma, tema oscuro y cerrar sesión.
  */
 export function UserDropdownMenu({ trigger }: { trigger: ReactNode }) {
-  const { logout, user } = useAuth();
-  const { currenLanguage, changeLanguage } = useLanguage();
-  const { theme, setTheme } = useTheme();
+  const { logout, user, tieneRol } = useAuth();
+  const navigate = useNavigate();
+  const { resolvedTheme, setTheme } = useTheme();
+  const { settings, storeOption } = useSettings();
+  const menuOscuro = settings.layouts.demo1.sidebarTheme === 'dark';
 
   const nombre = user?.usuario ?? 'Usuario';
 
@@ -48,30 +45,6 @@ export function UserDropdownMenu({ trigger }: { trigger: ReactNode }) {
 
         <DropdownMenuSeparator />
 
-        {/* Idioma */}
-        <DropdownMenuSub>
-          <DropdownMenuSubTrigger>
-            <Globe className="size-4 me-2" />
-            <span>Idioma</span>
-            <span className="ms-auto text-xs text-muted-foreground uppercase">
-              {currenLanguage.code}
-            </span>
-          </DropdownMenuSubTrigger>
-          <DropdownMenuSubContent>
-            <DropdownMenuRadioGroup value={currenLanguage.code}>
-              {I18N_LANGUAGES.map((idioma: Language) => (
-                <DropdownMenuRadioItem
-                  key={idioma.code}
-                  value={idioma.code}
-                  onClick={() => changeLanguage(idioma)}
-                >
-                  {idioma.label}
-                </DropdownMenuRadioItem>
-              ))}
-            </DropdownMenuRadioGroup>
-          </DropdownMenuSubContent>
-        </DropdownMenuSub>
-
         {/* Tema oscuro */}
         <DropdownMenuItem
           className="flex items-center justify-between"
@@ -83,9 +56,41 @@ export function UserDropdownMenu({ trigger }: { trigger: ReactNode }) {
           </span>
           <Switch
             size="sm"
-            checked={theme === 'dark'}
+            // resolvedTheme y no theme: con "system" (el valor por defecto),
+            // theme no dice si de verdad se ve oscuro
+            checked={resolvedTheme === 'dark'}
             onCheckedChange={(activo) => setTheme(activo ? 'dark' : 'light')}
           />
+        </DropdownMenuItem>
+
+        {/* Solo el menu lateral en oscuro, con el contenido claro. La plantilla
+            ya lo soportaba (sidebar.tsx le pone la clase "dark"); faltaba el control */}
+        <DropdownMenuItem
+          className="flex items-center justify-between"
+          onSelect={(e) => e.preventDefault()}
+        >
+          <span className="flex items-center">
+            <PanelLeft className="size-4 me-2" />
+            Menú lateral oscuro
+          </span>
+          <Switch
+            size="sm"
+            // Con todo en modo oscuro el menu ya es oscuro: el control no aplica
+            disabled={resolvedTheme === 'dark'}
+            checked={resolvedTheme === 'dark' || menuOscuro}
+            // storeOption lo guarda en localStorage: sobrevive al F5
+            onCheckedChange={(activo) =>
+              storeOption('layouts.demo1.sidebarTheme', activo ? 'dark' : 'light')
+            }
+          />
+        </DropdownMenuItem>
+
+        <DropdownMenuSeparator />
+
+        {/* Repite el recorrido guiado del panel cuando el usuario quiera */}
+        <DropdownMenuItem onClick={() => lanzarTourPanel(tieneRol('ADMIN'), navigate)}>
+          <HelpCircle className="size-4 me-2" />
+          Ver guía del panel
         </DropdownMenuItem>
 
         <DropdownMenuSeparator />

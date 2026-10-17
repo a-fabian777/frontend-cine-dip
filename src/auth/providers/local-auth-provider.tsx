@@ -3,6 +3,8 @@ import { AuthContext } from '@/auth/context/auth-context';
 import { UsuarioSesion } from '@/types/auth';
 import { authService } from '@/services/auth.service';
 import { estaVencido, leerToken } from '@/lib/jwt';
+import { MENSAJE_SESION_VENCIDA, registrarSesionVencida } from '@/lib/http';
+import { toast } from 'sonner';
 
 export function AuthProvider({ children }: PropsWithChildren) {
   // Empieza en true: hasta revisar el token no se sabe si hay sesion,
@@ -22,14 +24,14 @@ export function AuthProvider({ children }: PropsWithChildren) {
 
     authService.guardarToken(token);
 
-    const sesion = {
+    const sesion: UsuarioSesion = {
       id: payload.id,
       usuario: payload.usuario,
       roles: payload.roles,
     }
-    console.log('sesion iniciada:', sesion);
-    
+
     setUser(sesion);
+    return sesion;
   }, []);
 
   const logout = useCallback(() => {
@@ -37,6 +39,36 @@ export function AuthProvider({ children }: PropsWithChildren) {
     authService.borrarToken();
     setUser(undefined);
   }, []);
+
+  // Cierre que NO pidio el usuario: hay que explicarle por que salio
+  const cerrarPorVencimiento = useCallback(() => {
+    // Si ya no hay token, ya se cerro: el dashboard lanza 20+ peticiones a la
+    // vez y todas pueden volver con 401; asi solo la primera hace algo
+    if (!authService.obtenerToken()) return;
+    logout();
+    toast.warning(MENSAJE_SESION_VENCIDA, { id: MENSAJE_SESION_VENCIDA });
+  }, [logout]);
+
+  // http.ts no conoce React: se le pasa la funcion a la que debe avisar
+  // cuando el backend responda 401 (token vencido o invalido)
+  useEffect(() => {
+    registrarSesionVencida(cerrarPorVencimiento);
+    return () => registrarSesionVencida(null);
+  }, [cerrarPorVencimiento]);
+
+  // Temporizador hasta el "exp" del token: la sesion se cierra a su hora,
+  // sin esperar a que falle una peticion. El 401 queda como respaldo
+  useEffect(() => {
+    if (!user) return;
+    const token = authService.obtenerToken();
+    const payload = token ? leerToken(token) : null;
+    if (!payload?.exp) return;
+
+    const restante = payload.exp * 1000 - Date.now();
+    const temporizador = setTimeout(cerrarPorVencimiento, Math.max(restante, 0));
+    // Si cierra sesion antes (o cambia de usuario), el temporizador viejo se cancela
+    return () => clearTimeout(temporizador);
+  }, [user, cerrarPorVencimiento]);
 
 
   const tieneRol = useCallback(
@@ -56,7 +88,6 @@ export function AuthProvider({ children }: PropsWithChildren) {
         usuario: payload.usuario,
         roles: payload.roles,
       });
-      console.log('>>> sesion restaurada tras F5:', payload.usuario);
     } else if (token) {
       // Token roto o vencido: ya no sirve, mejor no dejarlo guardado
       authService.borrarToken();

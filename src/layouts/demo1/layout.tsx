@@ -8,6 +8,7 @@ import { useSettings } from '@/providers/settings-provider';
 import { Footer } from './components/footer';
 import { Header } from './components/header';
 import { Sidebar } from './components/sidebar';
+import { TourPanel } from '@/components/common/tour-panel';
 
 export function Demo1Layout() {
   const isMobile = useIsMobile();
@@ -61,6 +62,9 @@ export function Demo1Layout() {
       </Helmet>
 
       {!isMobile && <Sidebar />}
+
+      {/* Recorrido guiado la primera vez para ADMIN/GERENTE */}
+      <TourPanel />
 
       <div className="wrapper flex grow flex-col">
         <Header />

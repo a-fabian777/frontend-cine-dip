@@ -3,7 +3,8 @@ import { useAuth } from '@/auth/context/auth-context';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { AlertCircle, Eye, EyeOff } from 'lucide-react';
 import { useForm } from 'react-hook-form';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { rutaInterna } from '@/lib/rutas';
 import { Alert, AlertIcon, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import {
@@ -20,6 +21,8 @@ import { getSigninSchema, SigninSchemaType } from '../forms/signin-schema';
 
 export function SignInPage() {
   const [searchParams] = useSearchParams();
+  // Solo rutas internas: un ?next=//otro-sitio.com redirigiria afuera tras el login
+  const next = rutaInterna(searchParams.get('next'));
   const navigate = useNavigate();
   const { login } = useAuth();
 
@@ -43,10 +46,16 @@ export function SignInPage() {
       setProcesando(true);
       setError(null);
 
-      await login(values.usuario, values.contrasena);
+      const sesion = await login(values.usuario, values.contrasena);
 
-      // Vuelve a donde el usuario quería entrar antes del login
-      navigate(searchParams.get('next') || '/peliculas');
+      // ADMIN o GERENTE trabajan en el panel; el CLIENTE va a reservar
+      const esPersonal = sesion.roles.some(
+        (rol) => rol === 'ADMIN' || rol === 'GERENTE',
+      );
+      const destino = esPersonal ? '/panel' : '/peliculas';
+
+      // next manda: si venia de una pagina concreta, se le devuelve ahi
+      navigate(next || destino);
     } catch (err) {
       setError(
         err instanceof Error
@@ -61,9 +70,9 @@ export function SignInPage() {
   return (
     <div className="w-full space-y-6">
       <div className="space-y-1.5 text-center">
-        <h1 className="text-2xl font-semibold tracking-tight">Cine</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">Bienvenido de vuelta</h1>
         <p className="text-sm text-muted-foreground">
-          Ingresa con tu usuario para continuar
+          Ingresa para reservar tus butacas
         </p>
       </div>
 
@@ -141,6 +150,17 @@ export function SignInPage() {
           </Button>
         </form>
       </Form>
+
+      <p className="text-center text-sm text-muted-foreground">
+        ¿No tienes cuenta?{' '}
+        {/* Se pasa el next: si venia a reservar, tras registrarse vuelve ahi */}
+        <Link
+          to={`/auth/signup${next ? `?next=${encodeURIComponent(next)}` : ''}`}
+          className="font-medium text-primary hover:underline"
+        >
+          Crear cuenta
+        </Link>
+      </p>
     </div>
   );
 }

@@ -26,6 +26,10 @@
 /* Demos */
 @import './demos/demo1.css';
 
+/* Estilos propios del cine (nuestros, aparte de la plantilla) */
+@import './cine/fondos.css';
+@import './cine/estrellas.css';
+
 /** Dark/Light Theme Variant **/
 @custom-variant dark (&:is(.dark *));
 @custom-variant light (&:not(.dark *));

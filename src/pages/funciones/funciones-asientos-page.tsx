@@ -1,12 +1,28 @@
 import { useEffect, useMemo, useState } from "react";
+import { ArrowLeft, Banknote, CalendarDays, Clock, MapPin } from "lucide-react";
 import { Container } from "@/components/common/container";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Asiento, Funcion } from "@/types/cartelera";
 import { Link, useParams, useNavigate } from "react-router";
 import { carteleraService } from "@/services/cartelera.service";
 import { useAuth } from "@/auth/context/auth-context";
 import { reservaService } from "@/services/reserva.service";
+import { useConfirmar } from "@/components/common/confirmar/confirmar-context";
+import { toast } from "sonner";
 
+
+// Las butacas elegidas se guardan por funcion, para no perderlas al pasar
+// por el login. sessionStorage y no local: se limpia al cerrar la pestana
+const claveButacas = (idFuncion: number) => `butacas_funcion_${idFuncion}`;
+
+function leerGuardadas(idFuncion: number): number[] {
+    try {
+        return JSON.parse(sessionStorage.getItem(claveButacas(idFuncion)) ?? '[]');
+    } catch {
+        return [];
+    }
+}
 
 export function FuncionAsientosPage() {
     const { id } = useParams<{ id: string }>();
@@ -16,12 +32,15 @@ export function FuncionAsientosPage() {
     const [cargando, setCargando] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
-    //Los id de butacas que el usuario eligio 
-    const [elegidos, setElegidos] = useState<number[]>([]);
+    // Los id de butacas que el usuario eligio. Se recuperan de la sesion por si
+    // venia del login: asi no tiene que volver a elegirlas
+    const [elegidos, setElegidos] = useState<number[]>(() => leerGuardadas(idFuncion));
 
     const navigate = useNavigate();
     const { isAuthenticated, user } = useAuth();
     const [reservado, setReservado] = useState(false);
+    // Arriba, con los demas hooks: abajo hay returns tempranos (cargando, error)
+    const confirmar = useConfirmar();
 
 
     useEffect(() => {
@@ -33,10 +52,22 @@ export function FuncionAsientosPage() {
             .then(([butacas, funciones]) => {
                 setAsientos(butacas);
                 setFuncion(funciones.find((f) => f.idFuncion === idFuncion));
+                // Si alguna butaca guardada ya la tomo otro mientras no estaba, se descarta
+                const disponibles = new Set(butacas.filter((b) => b.disponible).map((b) => b.idAsiento));
+                setElegidos((previos) => previos.filter((id) => disponibles.has(id)));
             })
             .catch((e: Error) => setError(e.message))
             .finally(() => setCargando(false))
     }, [idFuncion])
+
+    // Guarda la seleccion en cada cambio: si va al login y vuelve, sigue ahi
+    useEffect(() => {
+        try {
+            sessionStorage.setItem(claveButacas(idFuncion), JSON.stringify(elegidos));
+        } catch {
+            // modo privado sin storage: no es grave, solo no se recuerdan
+        }
+    }, [elegidos, idFuncion])
 
     // agruparlo por fila
     const porFila = useMemo(() => {
@@ -95,9 +126,17 @@ export function FuncionAsientosPage() {
             return;
         }
         if (!funcion) return;
+
+        // Es una compra: se muestra el resumen antes de enviarla
+        const seguro = await confirmar({
+            titulo: '¿Confirmar la reserva?',
+            descripcion: `${funcion.pelicula} · ${elegidos.length} ${elegidos.length === 1 ? 'butaca' : 'butacas'} (${nombresElegidos}) · Total Bs ${total}`,
+            textoConfirmar: 'Sí, reservar',
+        });
+        if (!seguro) return;
+
         try {
             setReservado(true);
-            setError(null);
 
             const respuesta = await reservaService.crear({
                 idCliente: user.id,
@@ -112,10 +151,20 @@ export function FuncionAsientosPage() {
                 })),
             });
 
-            alert(`Reserva creada: ${respuesta.data.reserva.codigo}`);
+            // Ya se reservo: se olvidan las butacas guardadas de esta funcion
+            try { sessionStorage.removeItem(claveButacas(idFuncion)); } catch { /* sin storage */ }
+
+            // 10 segundos y no los 4 de siempre: el codigo hay que poder anotarlo
+            toast.success('¡Reserva creada!', {
+                description: `Tu código es ${respuesta.data.reserva.codigo}. Preséntalo en el cine.`,
+                duration: 10000,
+            });
             navigate('/peliculas')
         } catch (e) {
-            setError((e as Error).message);
+            // toast y no setError: setError cambia TODO el mapa de butacas por el
+            // mensaje. Con el texto como id, si la sesion vencio sale un solo aviso
+            const mensaje = e instanceof Error ? e.message : 'No se pudo crear la reserva.';
+            toast.error(mensaje, { id: mensaje });
         } finally {
             setReservado(false);
         }
@@ -128,20 +177,34 @@ export function FuncionAsientosPage() {
     return (
         <Container>
             <div className="py-8">
-                {
-                    funcion && (
-                        <Link to={`/peliculas/${funcion.idPelicula}`} className="">
-                            volver a {funcion.pelicula}
-                        </Link>
-                    )
-                }
-                <div className="mt-4">
-                    <h1 className="text-2xl font-semibold tracking-tight text-mono"> {funcion?.pelicula ?? 'Funcion'} </h1>
-                    {/* { funcion && (
-                <p>
-                    {funcion.sala} - {funcion.tipoSala}
-                </p>
-            )} */}
+                {funcion && (
+                    <Link
+                        to={`/peliculas/${funcion.idPelicula}`}
+                        className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-primary"
+                    >
+                        <ArrowLeft className="size-4" /> Volver a {funcion.pelicula}
+                    </Link>
+                )}
+
+                <div className="mt-4 space-y-3">
+                    <h1 className="text-3xl font-semibold tracking-tight text-mono">{funcion?.pelicula ?? 'Función'}</h1>
+                    {/* Contexto de la funcion: asi el usuario sabe que esta reservando */}
+                    {funcion && (
+                        <div className="flex flex-wrap items-center gap-2">
+                            <Badge variant="primary" appearance="light">
+                                <CalendarDays /> {funcion.fecha}
+                            </Badge>
+                            <Badge variant="warning" appearance="light">
+                                <Clock /> {funcion.horaInicio.slice(0, 5)} – {funcion.horaFin.slice(0, 5)}
+                            </Badge>
+                            <Badge variant="secondary" appearance="light">
+                                <MapPin /> {funcion.sala} · {funcion.tipoSala}
+                            </Badge>
+                            <Badge variant="success" appearance="light">
+                                <Banknote /> Bs {funcion.precio}
+                            </Badge>
+                        </div>
+                    )}
                 </div>
 
 

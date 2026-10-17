@@ -16,7 +16,6 @@ export function leerToken(token: string): PayloadToken | null {
         const json = new TextDecoder().decode(bytes);
 
         const payload = JSON.parse(json) as PayloadToken;
-        console.log('>>> payload del token', payload);
         return payload;
     } catch {
         // Token mal formado: se trata igual que no tener sesion
