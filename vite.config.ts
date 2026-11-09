@@ -14,4 +14,7 @@ export default defineConfig({
   build: {
     chunkSizeWarningLimit: 3000,
   },
+  server: {
+    allowedHosts: ['cine-posgrado.bo']
+  }
 });
