@@ -1,0 +1,52 @@
+name: CI front cine
+
+on:
+  push:
+    branches: [main]
+
+env:
+  IMAGEN: ${{ secrets.DOCKER_USERNAME }}/front-cine
+
+jobs:
+  pruebas:
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+
+      - name: instalar-node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: instalar-dependencias
+        run: npm ci --legacy-peer-deps
+
+      - name: verificar-build
+        run: npm run build -- --mode prod
+
+  docker:
+    needs: pruebas
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+
+      - name: docker-build
+        run: |
+          docker build -f ./Dockerfile \
+            -t ${{ env.IMAGEN }}:${{ github.sha }} \
+            -t ${{ env.IMAGEN }}:latest .
+
+      - name: inicio-sesion-docker
+        uses: docker/login-action@v4
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: push-a-docker
+        run: |
+          docker push ${{ env.IMAGEN }}:${{ github.sha }}
+          docker push ${{ env.IMAGEN }}:latest
+          echo "Imagen del frontend subida correctamente a Docker Hub"

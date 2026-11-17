@@ -1,12 +1,14 @@
 FROM node:22.14.0 as build
 
-ENV NODE_ENV=production
+#ENV NODE_ENV=production
 
 WORKDIR /app
 
 COPY package*.json .
 
 RUN npm ci --legacy-peer-deps
+
+# RUN npm install typescript
 
 COPY . .
 

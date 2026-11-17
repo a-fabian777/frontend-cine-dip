@@ -15,6 +15,6 @@ export default defineConfig({
     chunkSizeWarningLimit: 3000,
   },
   server: {
-    allowedHosts: ['cine-posgrado.bo']
+    allowedHosts: ['cine-posgrado.bo', 'cine-dev.com']
   }
 });
